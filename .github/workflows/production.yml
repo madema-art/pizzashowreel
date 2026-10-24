@@ -48,8 +48,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: Install review browser
-        run: npx playwright install --with-deps chromium
+      - name: Verify runner browser
+        run: google-chrome --version
       - name: Browser review
         run: npx playwright test
       - name: Render film
@@ -57,11 +57,13 @@ jobs:
           COMPOSITION: ${{ inputs.composition || 'ArtOfPizza' }}
         run: |
           case "$COMPOSITION" in ArtOfPizza|ArtOfPizzaVertical|ArtOfPizza4K) ;; *) exit 1;; esac
-          npx remotion render src/index.ts "$COMPOSITION" out/the-art-of-pizza.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --concurrency=2
+          npx remotion render src/index.ts "$COMPOSITION" out/the-art-of-pizza.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --concurrency=2 --browser-executable=/usr/bin/google-chrome
       - name: Verify encoded video
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg
+          if ! command -v ffprobe >/dev/null; then
+            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::Retries=2 update -qq
+            sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::Retries=2 install -y ffmpeg
+          fi
           python3 scripts/verify-render.py
       - name: Package browser screening room
         run: |
