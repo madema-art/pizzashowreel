@@ -13,13 +13,16 @@ Original illustrated food imagery: **this demonstration is not real food footage
 5. If Pages deployment is red but the film job passed, the MP4 artifact is still available. In repository **Settings → Pages → Build and deployment → Source**, select **GitHub Actions**, then rerun the workflow. Pages initial enablement can require a repository administrator; the workflow attempts it.
 
 ### Direct the next cut with Codex
-Connect this repository in **Codex Cloud**, create/select its cloud environment, and use `bash .codex/setup.sh` as its setup command. Allow npm and GitHub network access during setup. This script installs project dependencies and official Remotion skills in that cloud environment.
-The current chat cannot create the separate Codex Cloud environment for you. All installation, tests and renders in this repository run on GitHub's Ubuntu cloud runners. Nothing needs installing on Windows.
+An owner-private Codex Cloud environment named **pizzashowreel** was prepared and validated for this repository. In browser Codex, choose **Cloud → pizzashowreel**, then give creative instructions. Its saved installation and startup configuration uses Node 22.15.0, Chromium, FFmpeg, the tracked official Remotion skills, and a cloud-specific browser-test configuration. No Windows installation is needed.
+
+[Cloud setup record](https://chatgpt.com/local/01a16f31-5ab8-7706-9577-29a759b9b020) · [Published screening room](https://madema-art.github.io/pizzashowreel/)
+
+The GitHub Actions runner independently validates, renders and publishes every production update. For recreating setup elsewhere, `bash .codex/setup.sh` is provided as a starting point; the prepared environment already has a tested install script and startup instructions.
 
 Example instructions:
 > Open madema-art/pizzashowreel. Make the oven shot moodier, move the reveal two beats earlier, and use my uploaded stretching clip. Preserve the 30-second duration. Open a PR and link the verified render.
 
-Codex should read AGENTS.md, load the installed official Remotion skill, edit components, and let Actions validate/render the PR. Review the artifact; merge to publish the new main screening room. The Player is a preview, not a hosted editable Studio. For full Studio, a cloud developer session can run `npm run studio -- --host=0.0.0.0` with the port forwarded by that cloud platform; no Windows server is needed. No cloud Studio session is provisioned by this project.
+Codex should read AGENTS.md, load the installed official Remotion skill, edit components, and let Actions validate/render the PR. Review the artifact; merge to publish the new main screening room. The published Player is the permanent screening room. Editable Remotion Studio is prepared inside the Codex Cloud environment and is restarted by its saved startup instructions as needed. Its loopback address is internal to the cloud; use the published screening room for a directly accessible browser preview.
 
 ### Supply your own media
 Use GitHub's **Add file → Upload files** to place owned photos/clips under `public/media/`, or attach them to your next Codex Cloud request. For files over GitHub's browser upload limit, give Codex a downloadable source link and have it add suitably compressed production copies.
@@ -61,3 +64,6 @@ No paid rendering vendor or AI API is required. GitHub-hosted runner, storage, P
 
 ### Validation
 Actions produces review PNGs for all eight shots plus a portrait shot, catches browser errors, checks timeline coverage/media presence, compiles TypeScript, builds the static app and verifies the actual MP4 has H.264 video, AAC audio, 900 frames, 30 FPS and 30 seconds. Inspect those PNGs and play the MP4 before judging photographic realism or final creative quality.
+
+### Initial production verification
+The first published demonstration passed GitHub Actions and an independent Codex Cloud setup check: TypeScript, unit tests, browser review, Remotion Studio playback, and a full 1080p H.264/AAC render. Both render checks confirmed 900 frames, 30 FPS and 30 seconds. The [validated production run](https://github.com/madema-art/pizzashowreel/actions/runs/40120902289) contains the MP4, metadata and frame reviews. The 4K and vertical compositions are configured; the initial delivered MP4 is 1080p landscape.
