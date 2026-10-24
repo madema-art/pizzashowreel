@@ -1,0 +1,111 @@
+name: Produce PIZZA SHOWREEL
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      composition:
+        description: Output composition
+        type: choice
+        options: [ArtOfPizza, ArtOfPizzaVertical, ArtOfPizza4K]
+        default: ArtOfPizza
+permissions:
+  contents: read
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  film:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.15.0'
+      - name: Bootstrap dependency lock on first run
+        run: |
+          if [ ! -f package-lock.json ]; then npm install --package-lock-only; fi
+      - run: npm ci
+      - name: Install official Remotion agent skills
+        run: npx --yes skills add remotion-dev/skills --skill remotion-best-practices --agent codex --yes
+      - name: Preserve lock and skills on main
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          for folder in .agents .codex/skills; do
+            if [ -e "$folder" ]; then git add "$folder"; fi
+          done
+          if ! git diff --cached --quiet; then
+            git commit -m "Lock cloud dependencies and install official Remotion skills"
+            git push
+          fi
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Install review browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser review
+        run: npx playwright test
+      - name: Render film
+        env:
+          COMPOSITION: ${{ inputs.composition || 'ArtOfPizza' }}
+        run: |
+          case "$COMPOSITION" in ArtOfPizza|ArtOfPizzaVertical|ArtOfPizza4K) ;; *) exit 1;; esac
+          npx remotion render src/index.ts "$COMPOSITION" out/the-art-of-pizza.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --concurrency=2
+      - name: Verify encoded video
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python3 scripts/verify-render.py
+      - name: Package browser screening room
+        run: |
+          cp out/the-art-of-pizza.mp4 dist/the-art-of-pizza.mp4
+          touch dist/.nojekyll
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pizza-showreel-${{ inputs.composition || 'ArtOfPizza' }}
+          path: |
+            out/
+            package-lock.json
+            docs/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-screening-room
+          path: dist/
+          retention-days: 30
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (inputs.composition == '' || inputs.composition == 'ArtOfPizza')
+        with:
+          path: dist
+      - name: Publish run links
+        run: |
+          echo "## THE ART OF PIZZA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the MP4 and frame review from this run's artifacts. The browser-screening-room artifact contains a static Player build." >> "$GITHUB_STEP_SUMMARY"
+  pages:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (inputs.composition == '' || inputs.composition == 'ArtOfPizza')
+    needs: film
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Enable GitHub Pages for this public repository
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+        continue-on-error: true
+      - name: Deploy screening room
+        id: deployment
+        uses: actions/deploy-pages@v4

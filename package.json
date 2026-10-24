@@ -1,0 +1,31 @@
+{
+  "name": "pizza-showreel",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "audio": "node scripts/audio.mjs",
+    "build": "npm run audio && vite build",
+    "render": "npm run audio && remotion render src/index.ts ArtOfPizza out/the-art-of-pizza.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --concurrency=2",
+    "render:vertical": "npm run audio && remotion render src/index.ts ArtOfPizzaVertical out/the-art-of-pizza-vertical.mp4 --codec=h264 --concurrency=2",
+    "render:4k": "npm run audio && remotion render src/index.ts ArtOfPizza4K out/the-art-of-pizza-4k.mp4 --codec=h264 --concurrency=2",
+    "test": "node --import tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.366",
+    "@remotion/player": "4.0.366",
+    "remotion": "4.0.366",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "typescript": "5.8.3",
+    "vite": "6.3.5",
+    "tsx": "4.19.4",
+    "@playwright/test": "1.51.1",
+    "@types/node": "22.15.3"
+  }
+}
